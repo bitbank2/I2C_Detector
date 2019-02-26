@@ -1,0 +1,28 @@
+I2C Detector
+
+Written by Larry Bank (bitbank@pobox.com)
+Copyright (c) 2019 BitBank Software, Inc.
+Project started 25/2/2019
+
+The purpose of this project is to provide a small bit of code which can not
+only scan an I2C bus for devices, but identify those devices. I have a need for
+this in one of my projects where I was testing three different accelerometers
+and dynamically swapping between them. I thought that it could benefit others
+as well. Here are some scenarios where I thought it might be helpful:
+
+1) You've got an unmarked I2C device or one with misleading markings that you
+   would like to identify.
+
+2) You're prototyping a project which uses multiple I2C devices and you're not
+   sure if you set the address select bits correctly on each one.
+
+3) You're comparing sensors from multiple manufacturers and you would like to
+   swap them without having to recompile your code.
+
+4) You're hacking on a mystery device and would like to know what's inside.
+
+This code depends on my BitBang_I2C library:
+https://github.com/bitbank2/BitBang_I2C
+
+It's easy enough to change the I2C access for the Wire library or Linux.
+
