@@ -96,7 +96,7 @@ int i;
 #ifdef SHOW_NAME
 const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
                 "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
-                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1"};
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330"};
 #endif
 // supported devices
 enum {
@@ -118,7 +118,8 @@ enum {
   DEVICE_CCS811,
   DEVICE_HTS221,
   DEVICE_LPS25H,
-  DEVICE_LSM9DS1
+  DEVICE_LSM9DS1,
+  DEVICE_LM8330
 };
 //
 // Figure out what device is at that address
@@ -170,7 +171,12 @@ int iDevice = DEVICE_UNKNOWN;
     I2CReadRegister(i, 0x07, cTemp, 1);
     if (cTemp[0] == 0xc4) // WHO_AM_I
        return DEVICE_MAG3110;
-    
+
+    // Check for LM8330 keyboard controller
+    I2CReadRegister(i, 0x80, cTemp, 2);
+    if (cTemp[0] == 0x0 && cTemp[1] == 0x84) // manufacturer code + software revision
+       return DEVICE_LM8330;
+
     // Check for MAX44009
     if (i == 0x4a || i == 0x4b)
     {
