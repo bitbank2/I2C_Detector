@@ -40,11 +40,54 @@
 // Uses my Bit Bang I2C library. You can find it here:
 // https://github.com/bitbank2/BitBang_I2C
 
+//#define USE_BITBANG
+
+#ifdef USE_BITBANG
 #include <BitBang_I2C.h>
 // Arbitrary pins I used for testing with an ATmega328p
-#define SDA_PIN 14
-#define SCL_PIN 16
+#define SDA_PIN 12
+#define SCL_PIN 5
+#else
+#include <Wire.h>
+#endif
 
+#ifndef USE_BITBANG
+void I2CScan(uint8_t *pMap)
+{
+uint8_t addr, err;
+
+  memset(pMap, 0, 16);
+  for(addr = 1; addr < 127; addr++ )
+  {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    Wire.beginTransmission(addr);
+    err = Wire.endTransmission();
+ 
+    if (err == 0) // a device responded
+       pMap[addr>>3] |= (1 << (addr & 7));
+  }
+}
+int I2CReadRegister(uint8_t addr, uint8_t reg, uint8_t *pData, int len)
+{
+int i;
+
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
+  Wire.endTransmission();
+
+  Wire.beginTransmission(addr);
+  Wire.requestFrom(addr, len);
+  i = 0;
+  while (i < len && Wire.available())
+  {
+     pData[i] = Wire.read();
+     i++;
+  }
+  return i;
+}
+#endif
 //
 // If you don't need the explicit device names displayed, disable this code by
 // commenting out the next line
@@ -53,7 +96,7 @@
 #ifdef SHOW_NAME
 const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
                 "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
-                "MAG3110", "CCS811"};
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1"};
 #endif
 // supported devices
 enum {
@@ -72,7 +115,10 @@ enum {
   DEVICE_ADS1115,
   DEVICE_MAX44009,
   DEVICE_MAG3110,
-  DEVICE_CCS811
+  DEVICE_CCS811,
+  DEVICE_HTS221,
+  DEVICE_LPS25H,
+  DEVICE_LSM9DS1
 };
 //
 // Figure out what device is at that address
@@ -104,6 +150,21 @@ int iDevice = DEVICE_UNKNOWN;
     I2CReadRegister(i, 0x20, cTemp, 1);
     if (cTemp[0] == 0x81) // Device ID
        return DEVICE_CCS811;
+
+    // Check for LSM9DS1 magnetometer/gyro/accel sensor from STMicro
+    I2CReadRegister(i, 0x0f, cTemp, 1);
+    if (cTemp[0] == 0x68) // WHO_AM_I
+       return DEVICE_LSM9DS1;
+
+    // Check for LPS25H pressure sensor from STMicro
+    I2CReadRegister(i, 0x0f, cTemp, 1);
+    if (cTemp[0] == 0xbd) // WHO_AM_I
+       return DEVICE_LPS25H;
+    
+    // Check for HTS221 temp/humidity sensor from STMicro
+    I2CReadRegister(i, 0x0f, cTemp, 1);
+    if (cTemp[0] == 0xbc) // WHO_AM_I
+       return DEVICE_HTS221;
     
     // Check for MAG3110
     I2CReadRegister(i, 0x07, cTemp, 1);
@@ -160,7 +221,11 @@ int iDevice = DEVICE_UNKNOWN;
   return iDevice;
 }
 void setup() {
-  I2CInit(SDA_PIN, SCL_PIN, 400000L);
+#ifdef USE_BITBANG
+  I2CInit(SDA_PIN, SCL_PIN, 100000L);
+#else
+  Wire.begin();
+#endif
   delay(100); // allow devices to power up
   Serial.begin(9600);
 }

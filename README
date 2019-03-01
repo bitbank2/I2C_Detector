@@ -21,8 +21,11 @@ as well. Here are some scenarios where I thought it might be helpful:
 
 4) You're hacking on a mystery device and would like to know what's inside.
 
-This code depends on my BitBang_I2C library:
+This code can use the Wire library or my BitBang_I2C library:
 https://github.com/bitbank2/BitBang_I2C
 
-It's easy enough to change the I2C access for the Wire library or Linux.
+Most of the 18 devices currently detected are from STMicro because they're
+very consistent about having a "WHO_AM_I" register to identify each of their
+parts. Here are the currently recognized devices:
 
+SSD1306, SH1106, VL53L0X, BMP180, BMP280, BME280, MPU-60x0, MPU-9250, MCP9808, LSM6DS3, ADXL345, ADS1115, MAX44009, MAG3110, CCS811, HTS221, LPS25H, LSM9DS1
