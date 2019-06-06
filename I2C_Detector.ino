@@ -45,8 +45,8 @@
 #ifdef USE_BITBANG
 #include <BitBang_I2C.h>
 // Arbitrary pins I used for testing with an ATmega328p
-#define SDA_PIN 12
-#define SCL_PIN 5
+#define SDA_PIN 0xc0
+#define SCL_PIN 0xc1
 #else
 #include <Wire.h>
 #endif
@@ -96,7 +96,7 @@ int i;
 #ifdef SHOW_NAME
 const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
                 "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
-                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330"};
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231"};
 #endif
 // supported devices
 enum {
@@ -119,7 +119,8 @@ enum {
   DEVICE_HTS221,
   DEVICE_LPS25H,
   DEVICE_LSM9DS1,
-  DEVICE_LM8330
+  DEVICE_LM8330,
+  DEVICE_DS3231
 };
 //
 // Figure out what device is at that address
@@ -140,6 +141,11 @@ int iDevice = DEVICE_UNKNOWN;
        iDevice = DEVICE_SSD1306;
     return iDevice;
   }
+//  else if (i == 0x5b) // MLX90615?
+//  {
+//    I2CReadRegister(i, 0x10, cTemp, 3);
+//    for (j=0; j<3; j++) Serial.println(cTemp[j], HEX);
+//  }
   else // try to identify it from the known devices using register contents
   {
     // Check for VL53L0X
@@ -223,6 +229,11 @@ int iDevice = DEVICE_UNKNOWN;
        return DEVICE_MPU6000;
     else if (cTemp[0] == 0x71)
        return DEVICE_MPU9250;
+
+    // Check for DS3231 RTC
+    I2CReadRegister(i, 0x0e, cTemp, 1); // read the control register
+    if (i == 0x68 && cTemp[0] == 0x1c) // fixed I2C address and power on reset value  
+       return DEVICE_DS3231;
   }
   return iDevice;
 }
