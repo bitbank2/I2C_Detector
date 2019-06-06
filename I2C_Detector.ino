@@ -77,7 +77,6 @@ int i;
   Wire.write(reg);
   Wire.endTransmission();
 
-  Wire.beginTransmission(addr);
   Wire.requestFrom(addr, len);
   i = 0;
   while (i < len && Wire.available())
