@@ -46,7 +46,7 @@
 #include <BitBang_I2C.h>
 // Arbitrary pins I used for testing with an ATmega328p
 #define SDA_PIN 0xc0
-#define SCL_PIN 0xc1
+#define SCL_PIN 0xc2
 #else
 #include <Wire.h>
 #endif
@@ -69,7 +69,7 @@ uint8_t addr, err;
        pMap[addr>>3] |= (1 << (addr & 7));
   }
 }
-int I2CReadRegister(uint8_t addr, uint8_t reg, uint8_t *pData, int len)
+int I2CReadRegister(uint8_t addr, uint8_t reg, uint8_t *pData, uint8_t len)
 {
 int i;
 
@@ -95,7 +95,7 @@ int i;
 #ifdef SHOW_NAME
 const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
                 "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
-                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231"};
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231", "LIS3DH", "LIS3DSH"};
 #endif
 // supported devices
 enum {
@@ -119,7 +119,9 @@ enum {
   DEVICE_LPS25H,
   DEVICE_LSM9DS1,
   DEVICE_LM8330,
-  DEVICE_DS3231
+  DEVICE_DS3231,
+  DEVICE_LIS3DH,
+  DEVICE_LIS3DSH
 };
 //
 // Figure out what device is at that address
@@ -131,7 +133,6 @@ int iDevice = DEVICE_UNKNOWN;
 
   if (i == 0x3c || i == 0x3d) // Probably an OLED display
   {
-    uint8_t c;
     I2CReadRegister(i, 0x00, cTemp, 1);
     cTemp[0] &= 0xbf; // mask off power on/off bit
     if (cTemp[0] == 0x8) // SH1106
@@ -156,6 +157,16 @@ int iDevice = DEVICE_UNKNOWN;
     I2CReadRegister(i, 0x20, cTemp, 1);
     if (cTemp[0] == 0x81) // Device ID
        return DEVICE_CCS811;
+
+    // Check for LIS3DSH accelerometer from STMicro
+    I2CReadRegister(i, 0x0f, cTemp, 1);
+    if (cTemp[0] == 0x3f) // WHO_AM_I
+       return DEVICE_LIS3DSH;
+
+    // Check for LIS3DH accelerometer from STMicro
+    I2CReadRegister(i, 0x0f, cTemp, 1);
+    if (cTemp[0] == 0x33) // WHO_AM_I
+       return DEVICE_LIS3DH;
 
     // Check for LSM9DS1 magnetometer/gyro/accel sensor from STMicro
     I2CReadRegister(i, 0x0f, cTemp, 1);
@@ -194,7 +205,7 @@ int iDevice = DEVICE_UNKNOWN;
     // Check for ADS1115
     I2CReadRegister(i, 0x02, cTemp, 2); // Lo_thresh defaults to 0x8000
     I2CReadRegister(i, 0x03, &cTemp[2], 2); // Hi_thresh defaults to 0x7fff
-    if (cTemp[0] = 0x80 && cTemp[1] == 0x00 && cTemp[2] == 0x7f && cTemp[3] == 0xff)
+    if (cTemp[0] == 0x80 && cTemp[1] == 0x00 && cTemp[2] == 0x7f && cTemp[3] == 0xff)
        return DEVICE_ADS1115;
 
     // Check for MCP9808
@@ -249,7 +260,7 @@ void setup() {
 void loop() {
 uint8_t map[16];
 uint8_t i;
-int iDevice;
+int iDevice, iCount;
 
   Serial.println("Starting I2C Scan");
   I2CScan(map); // get bitmap of connected I2C devices
@@ -259,10 +270,12 @@ int iDevice;
   }
   else
   {
+    iCount = 0;
     for (i=1; i<128; i++) // skip address 0 (general call address) since more than 1 device can respond
     {
       if (map[i>>3] & (1 << (i & 7))) // device found
       {
+        iCount++;
         Serial.print("Device found at 0x");
         Serial.print(i, HEX);
         iDevice = DiscoverDevice(i);
@@ -273,7 +286,9 @@ int iDevice;
         Serial.println(iDevice); // show the device name as the enum index
   #endif
       }
-    }
+    } // for i
+    Serial.print(iCount, DEC);
+    Serial.println(" device(s) found");
   }
   delay(5000);
 }
