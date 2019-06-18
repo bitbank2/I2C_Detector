@@ -40,7 +40,7 @@
 // Uses my Bit Bang I2C library. You can find it here:
 // https://github.com/bitbank2/BitBang_I2C
 
-//#define USE_BITBANG
+#define USE_BITBANG
 
 #ifdef USE_BITBANG
 #include <BitBang_I2C.h>
@@ -95,7 +95,7 @@ int i;
 #ifdef SHOW_NAME
 const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
                 "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
-                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231", "LIS3DH", "LIS3DSH"};
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231", "LIS3DH", "LIS3DSH","INA219"};
 #endif
 // supported devices
 enum {
@@ -121,7 +121,8 @@ enum {
   DEVICE_LM8330,
   DEVICE_DS3231,
   DEVICE_LIS3DH,
-  DEVICE_LIS3DSH
+  DEVICE_LIS3DSH,
+  DEVICE_INA219
 };
 //
 // Figure out what device is at that address
@@ -140,6 +141,12 @@ int iDevice = DEVICE_UNKNOWN;
     else if (cTemp[0] == 3 || cTemp[0] == 6)
        iDevice = DEVICE_SSD1306;
     return iDevice;
+  }
+  else if (i >= 0x40 && i <= 0x4f) // check for TI INA219 power measurement sensor
+  {
+    I2CReadRegister(i, 0x00, cTemp, 2);
+    if (cTemp[0] == 0x39 && cTemp[1] == 0x9f)
+       return DEVICE_INA219;
   }
 //  else if (i == 0x5b) // MLX90615?
 //  {
@@ -248,13 +255,13 @@ int iDevice = DEVICE_UNKNOWN;
   return iDevice;
 }
 void setup() {
+  Serial.begin(9600);
 #ifdef USE_BITBANG
   I2CInit(SDA_PIN, SCL_PIN, 100000L);
 #else
   Wire.begin();
 #endif
   delay(100); // allow devices to power up
-  Serial.begin(9600);
 }
 
 void loop() {
