@@ -4,6 +4,15 @@ Written by Larry Bank (bitbank@pobox.com)
 Copyright (c) 2019 BitBank Software, Inc.
 Project started 25/2/2019
 
+*** UPDATE ***
+
+Most of the logic has been moved into my BitBang_I2C library and this sketch has become
+an example sketch for that library. For more info, please see the library here:
+
+https://github.com/bitbank2/BitBang_I2C
+
+**************
+
 The purpose of this project is to provide a small bit of code which can not
 only scan an I2C bus for devices, but identify those devices. I have a need for
 this in one of my projects where I was testing three different accelerometers
@@ -24,8 +33,8 @@ as well. Here are some scenarios where I thought it might be helpful:
 This code can use the Wire library or my BitBang_I2C library:
 https://github.com/bitbank2/BitBang_I2C
 
-Most of the 22 devices currently detected are from STMicro because they're
+Most of the 25 devices currently detected are from STMicro because they're
 very consistent about having a "WHO_AM_I" register to identify each of their
 parts. Here are the currently recognized devices:
 
-SSD1306, SH1106, VL53L0X, BMP180, BMP280, BME280, MPU-60x0, MPU-9250, MCP9808, LSM6DS3, ADXL345, ADS1115, MAX44009, MAG3110, CCS811, HTS221, LPS25H, LSM9DS1, DS3231, LIS3DH, LIS3DSH, INA219
+SSD1306, SH1106, VL53L0X, BMP180, BMP280, BME280, MPU-60x0, MPU-9250, MCP9808, LSM6DS3, ADXL345, ADS1115, MAX44009, MAG3110, CCS811, HTS221, LPS25H, LSM9DS1, LM8330, DS3231, LIS3DH, LIS3DSH, INA219, SHT3x, HDC1080
